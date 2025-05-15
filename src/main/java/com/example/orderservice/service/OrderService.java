@@ -12,6 +12,7 @@ import com.example.orderservice.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
@@ -34,6 +35,7 @@ public class OrderService {
         this.paymentWebClient = paymentWebClient;
     }
 
+    @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest) {
         // 주문 생성
         Order order = new Order();
@@ -69,18 +71,21 @@ public class OrderService {
         return mapToOrderResponse(savedOrder);
     }
 
+    @Transactional(readOnly = true)
     public OrderResponse getOrder(String orderNumber) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with number: " + orderNumber));
         return mapToOrderResponse(order);
     }
 
+    @Transactional(readOnly = true)
     public List<OrderResponse> getAllOrders() {
         return orderRepository.findAll().stream()
                 .map(this::mapToOrderResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public OrderResponse requestPayment(String orderNumber, String paymentMethod) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with number: " + orderNumber));
@@ -106,6 +111,7 @@ public class OrderService {
         return mapToOrderResponse(updatedOrder);
     }
 
+    @Transactional
     public OrderResponse updateOrderStatus(String orderNumber, String paymentId, OrderStatus status) {
         Order order = orderRepository.findByOrderNumber(orderNumber)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found with number: " + orderNumber));
